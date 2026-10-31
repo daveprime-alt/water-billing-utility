@@ -59,20 +59,17 @@ Completed, failed, and cancelled message details are redacted after 90 days; que
 
 Pending SMS rows created before the workflow migration are tagged `legacy`. The worker deliberately does not send these rows; review them manually before changing or removing them.
 
-The API and worker can be run as separate Docker Compose services while PostgreSQL stays on the VPS host:
-
-```bash
-# Merge the settings in .env.example into your existing .env without overwriting secrets.
-# Set DATABASE_URL to PostgreSQL reachable from the containers before starting.
-docker compose build
-docker compose run --rm api npm run db:deploy
-docker compose up -d
-```
-
-Inside these containers, `localhost` refers to the container. Compose maps `host.docker.internal` to the host gateway for both services, and does not publish a PostgreSQL port. Set `DATABASE_URL` to use that hostname and the host-installed PostgreSQL port. The Compose setting provides a route, but cannot secure PostgreSQL by itself: bind PostgreSQL only to the host gateway/interface needed by Docker (not public interfaces), allow the Compose network's source subnet in `pg_hba.conf` and the host firewall only for the required database/user, and deny public ingress to port 5432. Determine the actual gateway and Compose subnet on the VPS before configuring these rules; do not assume this workspace's Docker network addresses match production. Verify the VPS firewall and PostgreSQL `listen_addresses`/`pg_hba.conf` directly before deployment. Apply Prisma migrations as a controlled deployment step before starting the new worker:
+Run the API and SMS worker directly as separate Node.js processes. Make sure `DATABASE_URL` points to the PostgreSQL database and apply migrations before starting the services:
 
 ```bash
 npm run db:deploy
+npm start
+```
+
+In a separate process, start the worker with:
+
+```bash
+npm run sms:worker
 ```
 
 The repository currently contains the backend/API only; it does not include the admin frontend.

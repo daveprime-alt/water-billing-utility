@@ -1,9 +1,0 @@
-node_modules
-.git
-.env
-coverage
-dist
-build
-*.log
-AUG 2026 BILLS.xlsx
-uploads
