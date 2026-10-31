@@ -8,7 +8,7 @@ function isAllowedOrigin(origin) {
     const configuredOrigins = process.env.CORS_ORIGINS
         ?? (process.env.NODE_ENV === "production"
             ? ""
-            : "http://localhost:4000,http://localhost:5173");
+            : "https://water-billing-utility.vercel.app,http://localhost:5173,http://");
     const allowedOrigins = new Set(
         configuredOrigins.split(",").map((value) => value.trim()).filter(Boolean),
     );
