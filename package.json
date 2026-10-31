@@ -1,0 +1,42 @@
+{
+  "name": "water-billing-utility",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test",
+    "generate:client": "node scripts/generate-prisma-client.js",
+    "start": "node index.js",
+    "db:bootstrap-admin": "node scripts/bootstrap-admin.js",
+    "db:migrate": "node node_modules/prisma6/build/index.js migrate dev",
+    "db:deploy": "node node_modules/prisma6/build/index.js migrate deploy",
+    "db:studio": "node node_modules/prisma6/build/index.js studio",
+    "db:generate": "npm run generate:client",
+    "db:status": "node node_modules/prisma6/build/index.js migrate status",
+    "sms:worker": "node scripts/sms-worker.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.5",
+    "dotenv": "^18.0.8",
+    "prisma6": "npm:prisma@^6.19.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "africastalking": "^0.8.4",
+    "axios": "^1.20.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.1",
+    "multer": "^2.4.0",
+    "xlsx": "^0.18.5"
+  }
+}

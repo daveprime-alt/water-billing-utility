@@ -1,0 +1,184 @@
+datasource db {
+    provider = "postgresql"
+    url = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  READER
+  CONSUMER
+}
+
+enum InvoicesStatus {
+  UNPAID
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+  ADMIN_HOLD
+}
+
+enum SmsStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum SmsCampaignStatus {
+  DRAFT
+  QUEUED
+  SENDING
+  PAUSED
+  COMPLETED
+}
+
+model User {
+  id String @id @default(uuid())
+  accountNumber String? @unique
+  firstName String
+  middleName String?
+  lastName String
+  phoneNumber String? @unique
+  passwordHash String?
+  role Role @default(CONSUMER)
+  location String?
+  smsAnnouncementsOptOutAt DateTime?
+  createdAt DateTime @default(now())
+
+  customerReadings MeterReading[] @relation("CustomerToReadings")
+  recordedReadings MeterReading[] @relation("ReaderToReadings")
+}
+
+model MeterReading {
+  id String @id @default(uuid())
+  customerId String
+  customer User @relation("CustomerToReadings", fields: [customerId], references: [id], onDelete: Cascade)
+  readerId String
+  recordedBy User @relation("ReaderToReadings", fields: [readerId], references: [id], onDelete: Cascade)
+  previousReading Int
+  currentReading Int
+  unitsConsumed Int
+  isRollover Boolean @default(false)
+  dateRead DateTime @default(now())
+  invoice Invoice?
+}
+
+model Invoice {
+  id String @id @default(uuid())
+  readingId String @unique
+  reading MeterReading @relation(fields: [readingId], references: [id], onDelete: Cascade)
+
+  currentBillCents Int @map("amountCents")
+  openingReceivableCents Int @default(0) @map("arrearsCents")
+  paymentCreditsCents Int @default(0)
+  kplcAdjustmentCents Int @default(0) @map("kplcAdjustments")
+  closingReceivableCents Int @map("totalDueCents")
+  unitRateCents Int?
+
+  status InvoicesStatus @default(UNPAID)
+  billingMonth String
+  dueDate DateTime
+  createdAt DateTime @default(now())
+
+  mpesaTransactions MPesaTransaction[]
+}
+
+model MPesaTransaction {
+  id String @id @default(uuid())
+  invoiceId String
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  merchantRequestId String @unique
+  checkoutRequestId String @unique
+  amountCents Int
+  mpesaReceiptCode String? @unique
+  customerPhone String
+  failureReason String?
+  createdAt DateTime @default(now())
+}
+
+model SMSQueue {
+  id String @id @default(uuid())
+  recipient String
+  message String
+  templateData Json?
+  status SmsStatus @default(PENDING)
+  attempts Int @default(0)
+  errorMessage String?
+  notificationType String @default("legacy")
+  deduplicationKey String? @unique
+  scheduledAt DateTime @default(now())
+  nextAttemptAt DateTime @default(now())
+  lockedAt DateTime?
+  sentAt DateTime?
+  failedAt DateTime?
+  cancelledAt DateTime?
+  providerMessageId String?
+  manualRetryCount Int @default(0)
+  deliveryCycle Int @default(0)
+  campaignId String?
+  campaign SMSCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  sendAttempts SMSAttempt[]
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([status, nextAttemptAt, scheduledAt])
+  @@index([campaignId, status])
+}
+
+model SMSAttempt {
+  id String @id @default(uuid())
+  queueId String
+  queue SMSQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  attemptNumber Int
+  deliveryCycle Int @default(0)
+  accepted Boolean
+  providerMessageId String?
+  errorMessage String?
+  createdAt DateTime @default(now())
+
+  @@index([queueId, createdAt])
+}
+
+model SMSCampaign {
+  id String @id @default(uuid())
+  message String
+  status SmsCampaignStatus @default(DRAFT)
+  createdById String
+  recipientCount Int @default(0)
+  previewedRecipientCount Int?
+  previewedRecipients Json?
+  previewedAt DateTime?
+  createdAt DateTime @default(now())
+  confirmedAt DateTime?
+  pausedAt DateTime?
+  completedAt DateTime?
+  messages SMSQueue[]
+
+  @@index([status, createdAt])
+}
+
+model SMSAdminAudit {
+  id String @id @default(uuid())
+  actorId String
+  action String
+  targetId String?
+  details Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+model BlacklistedToken {
+    id String @id @default(uuid())
+    token String @unique
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+
+    @@index([expiresAt])
+}

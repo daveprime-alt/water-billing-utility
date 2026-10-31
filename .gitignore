@@ -1,0 +1,22 @@
+node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Generated output and logs
+coverage/
+dist/
+build/
+*.log
+npm-debug.log*
+
+# Local and legacy customer data
+AUG 2026 BILLS.xlsx
+uploads/
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+
