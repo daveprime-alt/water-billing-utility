@@ -59,7 +59,7 @@ Completed, failed, and cancelled message details are redacted after 90 days; que
 
 Pending SMS rows created before the workflow migration are tagged `legacy`. The worker deliberately does not send these rows; review them manually before changing or removing them.
 
-Run the API and SMS worker directly as separate Node.js processes. Make sure `DATABASE_URL` points to the PostgreSQL database and apply migrations before starting the services:
+Run the API and SMS worker directly as separate Node.js processes. Make sure `POSTGRES_URL` points to the PostgreSQL database and apply migrations before starting the services:
 
 ```bash
 npm run db:deploy
